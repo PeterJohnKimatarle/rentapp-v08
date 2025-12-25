@@ -629,7 +629,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         )}
 
-        {/* Test One Button - Only show when not running as standalone PWA */}
+        {/* Install Rentapp Button - Only show when not running as standalone PWA */}
         {variant === 'popup' && !isStandalone && (
           <button
             onClick={() => {
@@ -639,12 +639,12 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
             }}
             className="flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-test-tube flex-shrink-0" aria-hidden="true">
-              <path d="M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2"></path>
-              <path d="M8.5 2h7"></path>
-              <path d="M14.5 16h-5"></path>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-download flex-shrink-0" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7,10 12,15 17,10"></polyline>
+              <line x1="12" x2="12" y1="15" y2="3"></line>
             </svg>
-            <span className="text-base font-medium">Test One</span>
+            <span className="text-base font-medium">Install Rentapp</span>
           </button>
         )}
 
