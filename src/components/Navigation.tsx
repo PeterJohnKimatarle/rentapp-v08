@@ -6,11 +6,12 @@ import Link from 'next/link';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut } from 'lucide-react';
+import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut, Download } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 
 import { useState } from 'react';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 
 
@@ -39,6 +40,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
   const router = useRouter();
 
   const { isAuthenticated, user, endSession, isImpersonating, logout } = useAuth();
+  const { isInstallable, isInstalled, installPWA } = usePWAInstall();
 
   const isStaff = user?.role === 'staff';
 
@@ -596,7 +598,31 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         )}
 
-        
+        {/* Install Rentapp Button - Only in popup mode when installable */}
+        {variant === 'popup' && (
+          <button
+            onClick={async () => {
+              if (variant === 'popup' && onItemClick) {
+                onItemClick();
+              }
+
+              try {
+                const installed = await installPWA();
+                if (installed) {
+                  console.log('Rentapp successfully installed!');
+                } else {
+                  console.log('Rentapp installation cancelled');
+                }
+              } catch (error) {
+                console.error('Error installing Rentapp:', error);
+              }
+            }}
+            className="flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer"
+          >
+            <Download size={20} className="flex-shrink-0" />
+            <span className="text-base font-medium">Install Rentapp</span>
+          </button>
+        )}
 
         {/* Close and Home Buttons - Only in popup mode */}
 
