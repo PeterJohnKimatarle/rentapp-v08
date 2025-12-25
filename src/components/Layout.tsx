@@ -642,7 +642,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
       </div>
 
       {/* User Menu */}
-      {isClient && isAuthenticated && (
+      {isClient && (
         <UserMenu
           isOpen={isUserMenuOpen}
           onClose={closeUserMenu}

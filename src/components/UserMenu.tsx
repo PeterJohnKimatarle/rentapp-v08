@@ -15,7 +15,7 @@ interface UserMenuProps {
 
 export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClick }: UserMenuProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const isStaff = user?.role === 'staff';
   const isApprovedStaff = isStaff && user?.isApproved === true;
   const isAdmin = user?.role === 'admin';
@@ -52,10 +52,19 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
     };
   }, [isOpen, onClose]);
 
-  const displayFirstName = user?.firstName || user?.name?.split(' ')[0] || 'Guest User';
+  const displayFirstName = isAuthenticated
+    ? (user?.firstName || user?.name?.split(' ')[0] || 'User')
+    : 'Welcome';
 
   // Get user role display info
   const getUserRoleBanner = () => {
+    if (!isAuthenticated) {
+      return {
+        text: 'GUEST',
+        bgColor: 'bg-gray-500',
+        textColor: 'text-white'
+      };
+    }
     if (isAdmin) {
       return {
         text: 'ADMIN',
@@ -124,35 +133,66 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
         <div className="p-5 space-y-4">
           <div className="space-y-3">
             <div className="space-y-2">
-              <button
-                className="w-full px-4 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center"
-                onClick={() => {
-                  onClose();
-                  router.push('/profile');
-                }}
-              >
-                View profile
-              </button>
-              <button
-                className="w-full px-4 py-3 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors flex items-center justify-center"
-                onClick={() => {
-                  onClose();
-                  router.push('/contact');
-                }}
-              >
-                Feedback
-              </button>
-              <button
-                className="w-full px-4 py-3 rounded-xl bg-red-400 text-white hover:bg-red-500 transition-colors flex items-center justify-center gap-2"
-                onClick={() => {
-                  if (onLogoutClick) {
-                    onLogoutClick();
-                  }
-                }}
-              >
-                <LogOut size={18} />
-                <span>Logout</span>
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    className="w-full px-4 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      onClose();
+                      router.push('/profile');
+                    }}
+                  >
+                    View profile
+                  </button>
+                  <button
+                    className="w-full px-4 py-3 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      onClose();
+                      router.push('/contact');
+                    }}
+                  >
+                    Feedback
+                  </button>
+                  <button
+                    className="w-full px-4 py-3 rounded-xl bg-red-400 text-white hover:bg-red-500 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      if (onLogoutClick) {
+                        onLogoutClick();
+                      }
+                    }}
+                  >
+                    <LogOut size={18} />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="w-full px-4 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      onClose();
+                      // Trigger login popup or redirect to login
+                      const loginButton = document.querySelector('[data-login-trigger]');
+                      if (loginButton) {
+                        (loginButton as HTMLElement).click();
+                      } else {
+                        router.push('/?login=true');
+                      }
+                    }}
+                  >
+                    Login
+                  </button>
+                  <button
+                    className="w-full px-4 py-3 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors flex items-center justify-center"
+                    onClick={() => {
+                      onClose();
+                      router.push('/register');
+                    }}
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
               <button
                 className="w-full px-4 py-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors flex items-center justify-center"
                 onClick={() => {
@@ -162,12 +202,12 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
               >
                 Install Rentapp
               </button>
-            <button
+              <button
                 className="xl:hidden w-full px-4 py-3 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition-colors flex items-center justify-center"
-              onClick={onClose}
-            >
+                onClick={onClose}
+              >
                 Close
-            </button>
+              </button>
             </div>
           </div>
         </div>
