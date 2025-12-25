@@ -6,12 +6,11 @@ import Link from 'next/link';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut, Download } from 'lucide-react';
+import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 
-import { useState } from 'react';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { useState, useEffect } from 'react';
 
 
 
@@ -29,18 +28,19 @@ interface NavigationProps {
 
   onHomeClick?: () => void;
 
+  onInstallClick?: () => void;
+
 }
 
 
 
-export default function Navigation({ variant = 'default', onItemClick, onSearchClick, onLoginClick, onLogoutClick, onHomeClick }: NavigationProps) {
+export default function Navigation({ variant = 'default', onItemClick, onSearchClick, onLoginClick, onLogoutClick, onHomeClick, onInstallClick }: NavigationProps) {
 
   const pathname = usePathname();
 
   const router = useRouter();
 
   const { isAuthenticated, user, endSession, isImpersonating, logout } = useAuth();
-  const { isInstallable, isInstalled, installPWA } = usePWAInstall();
 
   const isStaff = user?.role === 'staff';
 
@@ -48,7 +48,38 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
   const isAdmin = user?.role === 'admin';
 
+
   const [isEndingSession, setIsEndingSession] = useState(false);
+
+  // PWA detection - check if running as standalone app
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const checkStandalone = () => {
+      // Check for iOS Safari standalone mode
+      const isIOSStandalone = (window.navigator as any).standalone === true;
+
+      // Check for Android/Chrome standalone mode
+      const isAndroidStandalone = window.matchMedia('(display-mode: standalone)').matches;
+
+      // Check for other browsers standalone mode
+      const isOtherStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                               window.matchMedia('(display-mode: fullscreen)').matches ||
+                               window.matchMedia('(display-mode: minimal-ui)').matches;
+
+      setIsStandalone(isIOSStandalone || isAndroidStandalone || isOtherStandalone);
+    };
+
+    checkStandalone();
+
+    // Listen for display mode changes (for dynamic PWA installations)
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    mediaQuery.addEventListener('change', checkStandalone);
+
+    return () => {
+      mediaQuery.removeEventListener('change', checkStandalone);
+    };
+  }, []);
 
 
 
@@ -93,7 +124,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
 
   return (
-
+    <>
     <nav className="p-4 lg:p-6">
 
       {/* Logo removed as requested */}
@@ -598,29 +629,22 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         )}
 
-        {/* Install Rentapp Button - Only in popup mode when installable */}
-        {variant === 'popup' && isInstallable && !isInstalled && (
+        {/* Test One Button - Only show when not running as standalone PWA */}
+        {variant === 'popup' && !isStandalone && (
           <button
-            onClick={async () => {
-              if (variant === 'popup' && onItemClick) {
-                onItemClick();
-              }
-
-              try {
-                const installed = await installPWA();
-                if (installed) {
-                  console.log('Rentapp successfully installed!');
-                } else {
-                  console.log('Rentapp installation cancelled');
-                }
-              } catch (error) {
-                console.error('Error installing Rentapp:', error);
+            onClick={() => {
+              if (onInstallClick) {
+                onInstallClick();
               }
             }}
             className="flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer"
           >
-            <Download size={20} className="flex-shrink-0" />
-            <span className="text-base font-medium">Install Rentapp</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-test-tube flex-shrink-0" aria-hidden="true">
+              <path d="M14.5 2v17.5c0 1.4-1.1 2.5-2.5 2.5h0c-1.4 0-2.5-1.1-2.5-2.5V2"></path>
+              <path d="M8.5 2h7"></path>
+              <path d="M14.5 16h-5"></path>
+            </svg>
+            <span className="text-base font-medium">Test One</span>
           </button>
         )}
 
@@ -694,10 +718,8 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
       </div>
 
-
-
     </nav>
-
+    </>
   );
 
 }
