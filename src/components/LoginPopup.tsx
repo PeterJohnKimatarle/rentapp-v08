@@ -152,7 +152,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={() => setShowEmailLogin(!showEmailLogin)}
-                className="text-blue-500 hover:text-blue-600 font-medium underline transition-colors duration-200"
+                className="text-blue-500 hover:text-blue-600 font-medium transition-colors duration-200"
               >
                 Login with Email
               </button>
@@ -162,16 +162,6 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
           {/* Email/Password Form - Only show when toggled */}
           {showEmailLogin && (
             <>
-              {/* Divider */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">or</span>
-                </div>
-              </div>
-
               <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -234,22 +224,22 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
               </>
             )}
 
-          {/* Continue with Google Link - Only show when email form is visible */}
+          {/* Login with Google Link - Only show when email form is visible */}
           {showEmailLogin && (
-            <div className="text-right pr-2 mt-4 mb-6">
+            <div className="text-right pr-2 mt-2 mb-6">
               <button
                 type="button"
                 onClick={() => setShowEmailLogin(false)}
-                className="text-blue-500 hover:text-blue-600 font-medium underline transition-colors duration-200"
+                className="text-blue-500 hover:text-blue-600 font-medium transition-colors duration-200"
               >
-                Continue with Google
+                Login with Google
               </button>
             </div>
           )}
 
           {/* Registration Prompt - Always visible */}
           <div className="mt-4 text-center">
-            <p className="text-gray-600 text-sm mb-2">
+            <p className="text-gray-600 text-base mb-2">
               Don&apos;t have an account?
             </p>
             <Link

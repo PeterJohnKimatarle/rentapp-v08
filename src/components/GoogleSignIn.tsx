@@ -69,7 +69,7 @@ export default function GoogleSignIn({
 
       {/* Button Text */}
       <span className="font-medium">
-        Continue with Google
+        Login with Google
       </span>
 
       {/* Optional loading spinner could go here */}
