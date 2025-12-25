@@ -68,18 +68,24 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
                                window.matchMedia('(display-mode: fullscreen)').matches ||
                                window.matchMedia('(display-mode: minimal-ui)').matches;
 
-      setIsStandalone(isIOSStandalone || isAndroidStandalone || isOtherStandalone);
+      const standalone = isIOSStandalone || isAndroidStandalone || isOtherStandalone;
+
+      // Batch state updates to prevent multiple renders
+      setIsStandalone(standalone);
+      setPwaCheckComplete(true);
     };
 
-    checkStandalone();
-    setPwaCheckComplete(true); // Mark check as complete after initial detection
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(checkStandalone, 100);
 
     // Listen for display mode changes (for dynamic PWA installations)
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    mediaQuery.addEventListener('change', checkStandalone);
+    const handleChange = () => checkStandalone();
+    mediaQuery.addEventListener('change', handleChange);
 
     return () => {
-      mediaQuery.removeEventListener('change', checkStandalone);
+      clearTimeout(timer);
+      mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
 
