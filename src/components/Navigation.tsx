@@ -52,7 +52,8 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
   const [isEndingSession, setIsEndingSession] = useState(false);
 
   // PWA detection - check if running as standalone app
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(true); // Default to true to prevent flash
+  const [pwaCheckComplete, setPwaCheckComplete] = useState(false);
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -71,6 +72,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
     };
 
     checkStandalone();
+    setPwaCheckComplete(true); // Mark check as complete after initial detection
 
     // Listen for display mode changes (for dynamic PWA installations)
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
@@ -629,8 +631,8 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         )}
 
-        {/* Install Rentapp Button - Only show when not running as standalone PWA */}
-        {variant === 'popup' && !isStandalone && (
+        {/* Install Rentapp Button - Only show when not running as standalone PWA and check is complete */}
+        {variant === 'popup' && !isStandalone && pwaCheckComplete && (
           <button
             onClick={() => {
               if (onInstallClick) {
