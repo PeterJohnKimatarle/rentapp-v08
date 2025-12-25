@@ -153,6 +153,15 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
                 <LogOut size={18} />
                 <span>Logout</span>
               </button>
+              <button
+                className="w-full px-4 py-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-colors flex items-center justify-center"
+                onClick={() => {
+                  // PWA install logic will be implemented here
+                  console.log('Install Rentapp clicked');
+                }}
+              >
+                Install Rentapp
+              </button>
             <button
                 className="xl:hidden w-full px-4 py-3 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition-colors flex items-center justify-center"
               onClick={onClose}
