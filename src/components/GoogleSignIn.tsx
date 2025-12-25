@@ -24,8 +24,8 @@ export default function GoogleSignIn({
   }
 
   const variantClasses = {
-    default: 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50',
-    compact: 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100',
+    default: 'bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50',
+    compact: 'bg-gray-50 border-2 border-gray-200 text-gray-600 hover:bg-gray-100',
     outline: 'bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
   }
 
@@ -38,10 +38,8 @@ export default function GoogleSignIn({
       className={`
         w-full flex items-center justify-center gap-3 rounded-lg
         transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-        transform hover:scale-[1.02] active:scale-[0.98]
         ${sizeClasses[size]}
         ${variantClasses[variant]}
-        ${isHovered ? 'shadow-md' : 'shadow-sm'}
       `}
     >
       {/* Google Logo */}
