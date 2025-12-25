@@ -599,7 +599,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
         )}
 
         {/* Install Rentapp Button - Only in popup mode when installable */}
-        {variant === 'popup' && (
+        {variant === 'popup' && isInstallable && !isInstalled && (
           <button
             onClick={async () => {
               if (variant === 'popup' && onItemClick) {

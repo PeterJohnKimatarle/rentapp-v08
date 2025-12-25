@@ -28,12 +28,18 @@ export function usePWAInstall() {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
         const isIOSStandalone = (window.navigator as any).standalone === true;
 
-        const installed = isStandalone || isIOSStandalone;
+        // Also check if we're running as an installed PWA
+        const isRunningAsPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                              (window.navigator as any).standalone === true ||
+                              document.referrer.includes('android-app://');
+
+        const installed = isStandalone || isIOSStandalone || isRunningAsPWA;
         console.log('PWA Install Debug:', {
           isStandalone,
           isIOSStandalone,
+          isRunningAsPWA,
           isInstalled: installed,
-          userAgent: navigator.userAgent
+          userAgent: navigator.userAgent.substring(0, 100) + '...'
         });
 
         setIsInstalled(installed);
@@ -43,7 +49,7 @@ export function usePWAInstall() {
     checkIfInstalled();
 
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
-      console.log('PWA Install Debug: beforeinstallprompt event fired');
+      console.log('PWA Install Debug: beforeinstallprompt event fired - browser supports PWA installation');
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later
@@ -52,7 +58,7 @@ export function usePWAInstall() {
     };
 
     const handleAppInstalled = () => {
-      console.log('PWA Install Debug: appinstalled event fired');
+      console.log('PWA Install Debug: appinstalled event fired - app successfully installed');
       // Hide the install button
       setIsInstalled(true);
       setIsInstallable(false);
@@ -65,10 +71,19 @@ export function usePWAInstall() {
     // Listen for the appinstalled event
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    // Set a timeout to check if the browser supports PWA after a short delay
+    // Some browsers fire the event immediately, others need time
+    const timeoutId = setTimeout(() => {
+      if (!isInstallable && !isInstalled) {
+        console.log('PWA Install Debug: No beforeinstallprompt event detected - browser may not support PWA installation');
+      }
+    }, 3000);
+
     // Cleanup
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      clearTimeout(timeoutId);
     };
   }, []);
 
