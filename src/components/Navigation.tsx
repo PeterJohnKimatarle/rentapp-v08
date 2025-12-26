@@ -55,36 +55,23 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
   const [isEndingSession, setIsEndingSession] = useState(false);
 
-  // PWA detection - check if running as standalone app
-  const [isStandalone, setIsStandalone] = useState(false);
+  // PWA detection - stable state that doesn't change during menu interactions
+  const [isStandalone] = useState(() => {
+    if (typeof window === 'undefined') return false;
 
+    // Check for iOS Safari standalone mode
+    const isIOSStandalone = (window.navigator as any).standalone === true;
 
-  useEffect(() => {
-    const checkStandalone = () => {
-      // Check for iOS Safari standalone mode
-      const isIOSStandalone = (window.navigator as any).standalone === true;
+    // Check for Android/Chrome standalone mode
+    const isAndroidStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
-      // Check for Android/Chrome standalone mode
-      const isAndroidStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    // Check for other browsers standalone mode
+    const isOtherStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.matchMedia('(display-mode: fullscreen)').matches ||
+                             window.matchMedia('(display-mode: minimal-ui)').matches;
 
-      // Check for other browsers standalone mode
-      const isOtherStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                               window.matchMedia('(display-mode: fullscreen)').matches ||
-                               window.matchMedia('(display-mode: minimal-ui)').matches;
-
-      setIsStandalone(isIOSStandalone || isAndroidStandalone || isOtherStandalone);
-    };
-
-    checkStandalone();
-
-    // Listen for display mode changes (for dynamic PWA installations)
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    mediaQuery.addEventListener('change', checkStandalone);
-
-    return () => {
-      mediaQuery.removeEventListener('change', checkStandalone);
-    };
-  }, []);
+    return isIOSStandalone || isAndroidStandalone || isOtherStandalone;
+  });
 
 
 
