@@ -52,8 +52,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
   const [isEndingSession, setIsEndingSession] = useState(false);
 
   // PWA detection - check if running as standalone app
-  const [isStandalone, setIsStandalone] = useState(true); // Default to true to prevent flash
-  const [pwaCheckComplete, setPwaCheckComplete] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -68,24 +67,17 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
                                window.matchMedia('(display-mode: fullscreen)').matches ||
                                window.matchMedia('(display-mode: minimal-ui)').matches;
 
-      const standalone = isIOSStandalone || isAndroidStandalone || isOtherStandalone;
-
-      // Batch state updates to prevent multiple renders
-      setIsStandalone(standalone);
-      setPwaCheckComplete(true);
+      setIsStandalone(isIOSStandalone || isAndroidStandalone || isOtherStandalone);
     };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(checkStandalone, 100);
+    checkStandalone();
 
     // Listen for display mode changes (for dynamic PWA installations)
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
-    const handleChange = () => checkStandalone();
-    mediaQuery.addEventListener('change', handleChange);
+    mediaQuery.addEventListener('change', checkStandalone);
 
     return () => {
-      clearTimeout(timer);
-      mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.removeEventListener('change', checkStandalone);
     };
   }, []);
 
@@ -637,19 +629,16 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         )}
 
-        {/* Install Rentapp Button Container - Reserve space to prevent layout shift */}
-        {variant === 'popup' && (
-          <div className="h-10 flex items-center">
-            <button
-              onClick={() => {
-                if (onInstallClick) {
-                  onInstallClick();
-                }
-              }}
-              className={`flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer transition-opacity duration-200 ${
-                !isStandalone && pwaCheckComplete ? 'opacity-100' : 'opacity-0 pointer-events-none'
-              }`}
-            >
+        {/* Install Rentapp Button - Only show when not running as standalone PWA */}
+        {variant === 'popup' && !isStandalone && (
+          <button
+            onClick={() => {
+              if (onInstallClick) {
+                onInstallClick();
+              }
+            }}
+            className="flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer"
+          >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-download flex-shrink-0" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7,10 12,15 17,10"></polyline>
@@ -657,7 +646,6 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
             </svg>
             <span className="text-base font-medium">Install Rentapp</span>
           </button>
-          </div>
         )}
 
         {/* Close and Home Buttons - Only in popup mode */}

@@ -313,7 +313,7 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
                 )
               ) : (
                 <select
-                  className="w-full px-3 py-2 rounded-lg text-center h-10 bg-gray-300 cursor-not-allowed"
+                  className="w-full px-3 py-2 rounded-lg text-center h-10 bg-gray-200 cursor-not-allowed"
                   style={{
                     color: '#9ca3af'
                   }}
