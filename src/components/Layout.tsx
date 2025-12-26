@@ -10,6 +10,7 @@ import { Menu, Search, ArrowLeft, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPopup from './LoginPopup';
 import InstallInstructionsModal from './InstallInstructionsModal';
+import AppInfoModal from './AppInfoModal';
 import { usePreventScroll } from '@/hooks/usePreventScroll';
 import UserMenu from './UserMenu';
 import { trackGuestVisit, markGuestInactive } from '@/utils/guestTracking';
@@ -27,6 +28,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
   const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [showAppInfoModal, setShowAppInfoModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -225,7 +227,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
   };
 
   // Prevent body scroll when menu is open
-  usePreventScroll(isMobileMenuOpen || isSearchPopupOpen || isUserMenuOpen || showLogoutConfirm || showInstallModal);
+  usePreventScroll(isMobileMenuOpen || isSearchPopupOpen || isUserMenuOpen || showLogoutConfirm || showInstallModal || showAppInfoModal);
 
   const updateAnchorPosition = useCallback((element: HTMLElement | null) => {
     if (!element) {
@@ -500,6 +502,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
                 onLoginClick={() => setIsLoginPopupOpen(true)}
                 onLogoutClick={() => setShowLogoutConfirm(true)}
                 onInstallClick={() => setShowInstallModal(true)}
+                onAppInfoClick={() => setShowAppInfoModal(true)}
                 onHomeClick={() => {
                   setIsMobileMenuOpen(false);
                   setIsSearchPopupOpen(false);
@@ -526,7 +529,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
       <div className="flex-1 flex flex-col lg:flex-row min-w-0 pt-14">
         {/* Left Panel - Navigation (Desktop) */}
         <div className="hidden xl:block xl:w-64 xl:min-w-64 bg-white border-b xl:border-b-0 xl:border-r border-gray-200 flex-shrink-0 xl:fixed xl:top-11 xl:left-0 xl:overflow-y-auto xl:z-20" style={{ overflowAnchor: 'none', height: 'calc(100vh - 2.75rem)' }}>
-          <Navigation onSearchClick={handleSearchClick} onLoginClick={() => setIsLoginPopupOpen(true)} onLogoutClick={() => setShowLogoutConfirm(true)} onInstallClick={() => setShowInstallModal(true)} />
+          <Navigation onSearchClick={handleSearchClick} onLoginClick={() => setIsLoginPopupOpen(true)} onLogoutClick={() => setShowLogoutConfirm(true)} onInstallClick={() => setShowInstallModal(true)} onAppInfoClick={() => setShowAppInfoModal(true)} />
         </div>
 
         {/* Center Panel - Main Content */}
@@ -739,6 +742,14 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
         <InstallInstructionsModal
           isOpen={showInstallModal}
           onClose={() => setShowInstallModal(false)}
+        />
+      )}
+
+      {/* App Info Modal */}
+      {showAppInfoModal && (
+        <AppInfoModal
+          isOpen={showAppInfoModal}
+          onClose={() => setShowAppInfoModal(false)}
         />
       )}
     </div>

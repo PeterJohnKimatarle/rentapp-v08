@@ -11,6 +11,8 @@ import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User,
 import { useAuth } from '@/contexts/AuthContext';
 
 import { useState, useEffect } from 'react';
+import InstallInstructionsModal from './InstallInstructionsModal';
+import AppInfoModal from './AppInfoModal';
 
 
 
@@ -30,11 +32,13 @@ interface NavigationProps {
 
   onInstallClick?: () => void;
 
+  onAppInfoClick?: () => void;
+
 }
 
 
 
-export default function Navigation({ variant = 'default', onItemClick, onSearchClick, onLoginClick, onLogoutClick, onHomeClick, onInstallClick }: NavigationProps) {
+export default function Navigation({ variant = 'default', onItemClick, onSearchClick, onLoginClick, onLogoutClick, onHomeClick, onInstallClick, onAppInfoClick }: NavigationProps) {
 
   const pathname = usePathname();
 
@@ -53,6 +57,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
   // PWA detection - check if running as standalone app
   const [isStandalone, setIsStandalone] = useState(false);
+
 
   useEffect(() => {
     const checkStandalone = () => {
@@ -645,6 +650,25 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
               <line x1="12" x2="12" y1="15" y2="3"></line>
             </svg>
             <span className="text-base font-medium">Install Rentapp</span>
+          </button>
+        )}
+
+        {/* App Info Button - Only show when running as standalone PWA */}
+        {variant === 'popup' && isStandalone && (
+          <button
+            onClick={() => {
+              if (onAppInfoClick) {
+                onAppInfoClick();
+              }
+            }}
+            className="flex items-center space-x-3 text-gray-800 hover:text-black px-4 py-2 rounded-lg hover:bg-yellow-500 w-full justify-start h-10 border border-white border-opacity-30 bg-blue-100 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-info flex-shrink-0" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 16v-4"></path>
+              <path d="M12 8h.01"></path>
+            </svg>
+            <span className="text-base font-medium">App Info</span>
           </button>
         )}
 
