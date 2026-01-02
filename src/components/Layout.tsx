@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import NextImage from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import Navigation from './Navigation';
@@ -676,30 +677,21 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
         onClose={() => setIsLoginPopupOpen(false)}
       />
 
-      {/* Logout Confirmation Popup */}
-      {showLogoutConfirm && (
+      {/* Logout Confirmation Popup - Rendered via Portal */}
+      {isClient && showLogoutConfirm && createPortal(
         <div 
-          className="fixed inset-0 flex items-center justify-center z-[70] p-4"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            const modal = target.closest('.bg-white.rounded-xl');
-            // Close if clicking outside the modal
-            if (!modal) {
-              setShowLogoutConfirm(false);
-            }
+          className="fixed inset-0 flex items-center justify-center z-[80] p-4"
+          style={{
+            touchAction: 'none',
+            minHeight: '100vh',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)'
           }}
-          onTouchEnd={(e) => {
-            const target = e.target as HTMLElement;
-            const modal = target.closest('.bg-white.rounded-xl');
-            // Close if touching outside the modal
-            if (!modal) {
-              setShowLogoutConfirm(false);
-            }
-          }}
+          onClick={() => setShowLogoutConfirm(false)}
         >
           <div 
             className="bg-white rounded-xl w-full mx-4 shadow-2xl overflow-hidden max-w-sm"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center p-4 pb-4">
               <p className="text-gray-900 text-base">Are you sure you want to logout ?</p>
@@ -734,7 +726,8 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Install Instructions Modal */}

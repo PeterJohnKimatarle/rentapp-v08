@@ -101,27 +101,18 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
   return (
     <div 
       className="fixed inset-0 flex items-center justify-center z-50 p-4"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-      onClick={(e) => {
-        const target = e.target as HTMLElement;
-        const modal = target.closest('.bg-white.rounded-xl');
-        // Close if clicking outside the modal
-        if (!modal) {
-          handleClose();
-        }
+      style={{
+        touchAction: 'none',
+        minHeight: '100vh',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)'
       }}
-      onTouchEnd={(e) => {
-        const target = e.target as HTMLElement;
-        const modal = target.closest('.bg-white.rounded-xl');
-        // Close if touching outside the modal
-        if (!modal) {
-          handleClose();
-        }
-      }}
+      onClick={() => handleClose()}
     >
       <div 
         ref={popupRef}
         className="bg-white rounded-xl max-w-sm w-full max-h-[65vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-center pt-3 pb-2 px-4 bg-white sticky top-0 z-10">
@@ -148,7 +139,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
 
           {/* Login with Email Link - Only show when Google button is visible */}
           {!showEmailLogin && (
-            <div className="text-right pr-2 mb-6">
+            <div className="text-right pr-2 mt-2">
               <button
                 type="button"
                 onClick={() => setShowEmailLogin(!showEmailLogin)}
@@ -226,7 +217,7 @@ const LoginPopup: React.FC<LoginPopupProps> = ({ isOpen, onClose }) => {
 
           {/* Login with Google Link - Only show when email form is visible */}
           {showEmailLogin && (
-            <div className="text-right pr-2 mt-2 mb-6">
+            <div className="text-right pr-2 mt-2">
               <button
                 type="button"
                 onClick={() => setShowEmailLogin(false)}
