@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ImageLightbox from './ImageLightbox';
 import SharePopup from './SharePopup';
 import { usePreventScroll } from '@/hooks/usePreventScroll';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShareManager } from '@/utils/shareUtils';
 import Link from 'next/link';
 
@@ -170,6 +170,7 @@ export default function PropertyCard({ property, onBookmarkClick, showMinusIcon 
   const { user } = useAuth();
   const userId = user?.id;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPinged, setIsPinged] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -799,7 +800,7 @@ export default function PropertyCard({ property, onBookmarkClick, showMinusIcon 
 
           {/* Property Details */}
           <Link 
-            href={`/property/${property.id}`}
+            href={`/property/${property.id}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`}
             prefetch={true}
             className="flex-1 pt-0 pb-1.5 px-1.5 sm:pt-0 sm:pb-3 sm:px-3 md:pt-0 md:pb-4 md:px-4 lg:pt-0 lg:pb-6 lg:px-6 min-w-0 overflow-hidden cursor-pointer"
           >
@@ -1058,7 +1059,8 @@ export default function PropertyCard({ property, onBookmarkClick, showMinusIcon 
           onImageChange={setCurrentImageIndex}
           onViewDetails={() => {
             setIsLightboxOpen(false);
-            router.push(`/property/${property.id}`);
+            const queryString = searchParams.toString();
+            router.push(`/property/${property.id}${queryString ? `?${queryString}` : ''}`);
           }}
         />
       )}

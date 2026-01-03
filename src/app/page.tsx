@@ -4,7 +4,8 @@ import Layout from '@/components/Layout';
 import PropertyCard from '@/components/PropertyCard';
 import { getAllProperties } from '@/utils/propertyUtils';
 import { parsePropertyType } from '@/utils/propertyTypes';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 type SearchFilters = {
   propertyType?: string;
@@ -17,8 +18,11 @@ type SearchFilters = {
 };
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [properties, setProperties] = useState(getAllProperties());
   const [activeFilters, setActiveFilters] = useState<SearchFilters | null>(null);
+  const hasInitializedRef = useRef(false);
 
   // Update properties when localStorage changes
   useEffect(() => {
@@ -96,46 +100,136 @@ export default function Home() {
     [properties, activeFilters, applyFilters]
   );
 
-  // Listen for search events
+  // Restore search state from URL params, but only on client-side navigation (not page refresh)
   useEffect(() => {
-    const handleSearch = (event: Event) => {
-      const { detail } = event as CustomEvent<SearchFilters>;
-      const filters = detail || {};
+    // Only run initialization logic once on mount
+    if (hasInitializedRef.current) {
+      // Subsequent updates (e.g., URL changes from navigation) - restore from URL
+      const filters: SearchFilters = {};
+      let hasFilters = false;
 
-      const hasFilters = Object.values(filters).some((value) => {
-        if (typeof value === 'string') {
-          return value.trim().length > 0;
+      const propertyType = searchParams.get('propertyType');
+      const profile = searchParams.get('profile');
+      const status = searchParams.get('status');
+      const region = searchParams.get('region');
+      const ward = searchParams.get('ward');
+      const minPrice = searchParams.get('minPrice');
+      const maxPrice = searchParams.get('maxPrice');
+
+      if (propertyType) {
+        filters.propertyType = propertyType;
+        hasFilters = true;
+      }
+      if (profile) {
+        filters.profile = profile;
+        hasFilters = true;
+      }
+      if (status) {
+        filters.status = status;
+        hasFilters = true;
+      }
+      if (region) {
+        filters.region = region;
+        hasFilters = true;
+      }
+      if (ward) {
+        filters.ward = ward;
+        hasFilters = true;
+      }
+      if (minPrice) {
+        const parsed = parseInt(minPrice, 10);
+        if (!isNaN(parsed)) {
+          filters.minPrice = parsed;
+          hasFilters = true;
         }
-        return Boolean(value);
-      });
+      }
+      if (maxPrice) {
+        const parsed = parseInt(maxPrice, 10);
+        if (!isNaN(parsed)) {
+          filters.maxPrice = parsed;
+          hasFilters = true;
+        }
+      }
 
       setActiveFilters(hasFilters ? filters : null);
-    };
+      return;
+    }
 
-    window.addEventListener('rentappSearch', handleSearch as EventListener);
+    // First mount - detect navigation type
+    hasInitializedRef.current = true;
 
-    // Check for stored search filters from redirect
-    const storedFilters = sessionStorage.getItem('rentapp_search_filters');
-    if (storedFilters) {
+    // Detect if this is a page reload vs client-side navigation
+    let isPageReload = false;
+    if (typeof window !== 'undefined' && 'performance' in window) {
       try {
-        const filters = JSON.parse(storedFilters);
-        sessionStorage.removeItem('rentapp_search_filters');
-        const hasFilters = Object.values(filters).some((value) => {
-          if (typeof value === 'string') {
-            return value.trim().length > 0;
-          }
-          return Boolean(value);
-        });
-        setActiveFilters(hasFilters ? filters : null);
+        const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+        if (navigationEntries.length > 0) {
+          const navigationType = navigationEntries[0].type;
+          // 'reload' means page refresh, 'navigate' or 'back_forward' means client-side navigation
+          isPageReload = navigationType === 'reload';
+        }
       } catch (e) {
-        console.error('Error parsing stored search filters:', e);
+        // Fallback: if Performance API is not available, assume it's not a reload
+        // This preserves existing behavior for older browsers
+        isPageReload = false;
       }
     }
 
-    return () => {
-      window.removeEventListener('rentappSearch', handleSearch as EventListener);
-    };
-  }, []);
+    if (isPageReload) {
+      // Page refresh - ignore URL params and reset to default state
+      // Don't clear URL params here - they're needed for back navigation history
+      setActiveFilters(null);
+    } else {
+      // Client-side navigation (including back/forward) - restore from URL
+      const filters: SearchFilters = {};
+      let hasFilters = false;
+
+      const propertyType = searchParams.get('propertyType');
+      const profile = searchParams.get('profile');
+      const status = searchParams.get('status');
+      const region = searchParams.get('region');
+      const ward = searchParams.get('ward');
+      const minPrice = searchParams.get('minPrice');
+      const maxPrice = searchParams.get('maxPrice');
+
+      if (propertyType) {
+        filters.propertyType = propertyType;
+        hasFilters = true;
+      }
+      if (profile) {
+        filters.profile = profile;
+        hasFilters = true;
+      }
+      if (status) {
+        filters.status = status;
+        hasFilters = true;
+      }
+      if (region) {
+        filters.region = region;
+        hasFilters = true;
+      }
+      if (ward) {
+        filters.ward = ward;
+        hasFilters = true;
+      }
+      if (minPrice) {
+        const parsed = parseInt(minPrice, 10);
+        if (!isNaN(parsed)) {
+          filters.minPrice = parsed;
+          hasFilters = true;
+        }
+      }
+      if (maxPrice) {
+        const parsed = parseInt(maxPrice, 10);
+        if (!isNaN(parsed)) {
+          filters.maxPrice = parsed;
+          hasFilters = true;
+        }
+      }
+
+      setActiveFilters(hasFilters ? filters : null);
+    }
+  }, [searchParams, router]);
 
   const hasActiveFilters = activeFilters !== null;
 

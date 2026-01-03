@@ -124,14 +124,39 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     e.stopPropagation();
   }, []);
 
-  const dispatchSearchEvent = (filters: {
+  const updateSearchParams = (filters: {
     propertyType?: string;
+    profile?: string;
     status?: string;
     region?: string;
     ward?: string;
+    minPrice?: number;
+    maxPrice?: number;
   }) => {
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(new CustomEvent('rentappSearch', { detail: filters }));
+    const params = new URLSearchParams();
+    
+    if (filters.propertyType) params.set('propertyType', filters.propertyType);
+    if (filters.profile) params.set('profile', filters.profile);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.region) params.set('region', filters.region);
+    if (filters.ward) params.set('ward', filters.ward);
+    if (filters.minPrice) params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
+
+    const queryString = params.toString();
+    const newUrl = queryString ? `/?${queryString}` : '/';
+    
+    // Check if current page is homepage, bookmarks, my-properties, or recently-removed-bookmarks
+    const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
+    const isAllowedPage = allowedPages.includes(pathname);
+
+    if (!isAllowedPage) {
+      // Redirect to homepage with search params
+      router.push(newUrl);
+    } else {
+      // Update URL on current page
+      router.push(newUrl);
+    }
   };
 
   if (!isOpen) return null;
@@ -147,24 +172,8 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
       maxPrice: maxPrice ? parseInt(maxPrice.replace(/,/g, '')) : undefined
     };
 
-    // Check if current page is homepage, bookmarks, my-properties, or recently-removed-bookmarks
-    const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
-    const isAllowedPage = allowedPages.includes(pathname);
-
-    if (!isAllowedPage) {
-      // Store filters in sessionStorage and redirect to homepage
-      sessionStorage.setItem('rentapp_search_filters', JSON.stringify(filters));
-      router.push('/');
-      onClose();
-      // Dispatch event after a small delay to ensure homepage has loaded
-      setTimeout(() => {
-        dispatchSearchEvent(filters);
-      }, 100);
-    } else {
-      // On allowed pages, dispatch event normally
-      dispatchSearchEvent(filters);
+    updateSearchParams(filters);
     onClose();
-    }
   };
 
   const handleClearFilters = () => {
@@ -178,23 +187,16 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     setMinPrice('');
     setMaxPrice('');
     
-    // Check if current page is homepage, bookmarks, my-properties, or recently-removed-bookmarks
+    // Clear URL params by navigating to base path
     const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
     const isAllowedPage = allowedPages.includes(pathname);
 
     if (!isAllowedPage) {
-      // Store empty filters and redirect to homepage
-      sessionStorage.setItem('rentapp_search_filters', JSON.stringify({}));
       router.push('/');
-      onClose();
-      // Dispatch event after a small delay to ensure homepage has loaded
-      setTimeout(() => {
-        dispatchSearchEvent({});
-      }, 100);
     } else {
-      // On allowed pages, dispatch event normally
-    dispatchSearchEvent({});
+      router.push('/');
     }
+    onClose();
   };
 
   const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1280;
