@@ -4,8 +4,9 @@ import Layout from '@/components/Layout';
 import PropertyCard from '@/components/PropertyCard';
 import { getAllProperties } from '@/utils/propertyUtils';
 import { parsePropertyType } from '@/utils/propertyTypes';
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { getSearchSessionId, getSearchFilters, clearSearchSession } from '@/utils/searchSession';
 
 type SearchFilters = {
   propertyType?: string;
@@ -19,10 +20,23 @@ type SearchFilters = {
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [properties, setProperties] = useState(getAllProperties());
   const [activeFilters, setActiveFilters] = useState<SearchFilters | null>(null);
-  const hasInitializedRef = useRef(false);
+
+  // Clear search session on page refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleBeforeUnload = () => {
+        clearSearchSession();
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }
+  }, []);
 
   // Update properties when localStorage changes
   useEffect(() => {
@@ -151,67 +165,24 @@ export default function Home() {
     return hasFilters ? filters : null;
   }, [searchParams]);
 
-  // Restore search state from URL params, but only on client-side navigation (not page refresh)
+  // Restore search state based on explicit search session ID
   useEffect(() => {
-    // Only run initialization logic once on mount
-    if (hasInitializedRef.current) {
-      // Subsequent updates (e.g., URL changes from navigation) - restore from URL
-      const filters = parseFiltersFromURL();
-      setActiveFilters(filters);
-      return;
-    }
-
-    // First mount - detect if this is a page refresh or initial load with URL params
-    hasInitializedRef.current = true;
-
-    // Use sessionStorage flag to detect client-side navigation
-    // This flag is set when we navigate client-side and cleared on page unload
-    const CLIENT_NAV_FLAG = 'rentapp_client_navigation';
-    
     if (typeof window !== 'undefined') {
-      // Check if we have the client navigation flag
-      const isClientNavigation = sessionStorage.getItem(CLIENT_NAV_FLAG) === 'true';
+      const searchSessionId = getSearchSessionId();
       
-      // Detect if this is specifically a page refresh (not just absence of flag)
-      let isPageRefresh = false;
-      if ('performance' in window) {
-        try {
-          const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-          if (navigationEntries.length > 0) {
-            const navigationType = navigationEntries[0].type;
-            // 'reload' means page refresh, other types mean initial load or navigation
-            isPageRefresh = navigationType === 'reload';
-          }
-        } catch (e) {
-          // Fallback: if Performance API is not available, assume it's not a refresh
-          isPageRefresh = false;
-        }
-      }
-      
-      // Set up beforeunload handler to clear flag on page refresh
-      const handleBeforeUnload = () => {
-        sessionStorage.removeItem(CLIENT_NAV_FLAG);
-      };
-      
-      window.addEventListener('beforeunload', handleBeforeUnload);
-
-      if (isPageRefresh) {
-        // Page refresh detected - reset to default state (ignore URL params)
-        setActiveFilters(null);
-      } else {
-        // Initial load with URL params OR client-side navigation - restore from URL
-        // This handles: bookmarks, external links, direct URL entry, and back/forward navigation
+      if (searchSessionId) {
+        // Active search session exists - restore from URL
+        // Session ID persists in memory during client-side navigation
         const filters = parseFiltersFromURL();
         setActiveFilters(filters);
+      } else {
+        // No search session - initialize default search state (reset)
+        // This handles: page refresh, initial load without active session
+        setActiveFilters(null);
       }
-
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
     } else {
-      // SSR fallback - restore from URL if params exist
-      const filters = parseFiltersFromURL();
-      setActiveFilters(filters);
+      // SSR fallback - reset to default
+      setActiveFilters(null);
     }
   }, [searchParams, parseFiltersFromURL]);
 

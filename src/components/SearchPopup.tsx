@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { generateSearchSessionId, setSearchSession } from '@/utils/searchSession';
 import { 
   getAllPropertyTypes, 
   getPropertyTypeChildren, 
@@ -146,11 +147,9 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     const queryString = params.toString();
     const newUrl = queryString ? `/?${queryString}` : '/';
     
-    // Set client navigation flag to indicate this is client-side navigation
-    // This flag will be cleared on page refresh (beforeunload)
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('rentapp_client_navigation', 'true');
-    }
+    // Generate and set search session ID for this search
+    const searchSessionId = generateSearchSessionId();
+    setSearchSession(searchSessionId, filters);
     
     // Check if current page is homepage, bookmarks, my-properties, or recently-removed-bookmarks
     const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
@@ -193,10 +192,8 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     setMinPrice('');
     setMaxPrice('');
     
-    // Set client navigation flag to indicate this is client-side navigation
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('rentapp_client_navigation', 'true');
-    }
+    // Clear search session when clearing filters
+    setSearchSession(generateSearchSessionId(), null);
     
     // Clear URL params by navigating to base path
     const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
