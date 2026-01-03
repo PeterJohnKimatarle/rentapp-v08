@@ -3,7 +3,8 @@
 import { ReactNode, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import NextImage from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { getSearchSessionId } from '@/utils/searchSession';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import SearchPopup from './SearchPopup';
@@ -33,6 +34,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, logout, isImpersonating } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
@@ -234,8 +236,15 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
       // Reload the page if already on homepage
       window.location.reload();
     } else {
-      // Redirect to home if not on homepage
-    router.push('/');
+      // Preserve search params if search is active
+      const searchSessionId = getSearchSessionId();
+      if (searchSessionId && searchParams.toString()) {
+        // Navigate to home with search params preserved
+        router.push(`/?${searchParams.toString()}`);
+      } else {
+        // Navigate to home without search params
+        router.push('/');
+      }
     }
   };
 
@@ -582,8 +591,15 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
                     }
                   });
                   
-                  // Navigate to home page
-                  router.push('/');
+                  // Preserve search params if search is active
+                  const searchSessionId = getSearchSessionId();
+                  if (searchSessionId && searchParams.toString()) {
+                    // Navigate to home with search params preserved
+                    router.push(`/?${searchParams.toString()}`);
+                  } else {
+                    // Navigate to home without search params
+                    router.push('/');
+                  }
                 }}
               />
             </div>

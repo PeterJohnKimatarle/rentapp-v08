@@ -4,7 +4,8 @@
 
 import Link from 'next/link';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { getSearchSessionId } from '@/utils/searchSession';
 
 import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut } from 'lucide-react';
 
@@ -41,7 +42,7 @@ interface NavigationProps {
 export default function Navigation({ variant = 'default', onItemClick, onSearchClick, onLoginClick, onLogoutClick, onHomeClick, onInstallClick, onAppInfoClick }: NavigationProps) {
 
   const pathname = usePathname();
-
+  const searchParams = useSearchParams();
   const router = useRouter();
 
   const { isAuthenticated, user, endSession, isImpersonating, logout } = useAuth();
@@ -129,7 +130,14 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         <Link 
 
-          href="/" 
+          href={(() => {
+            // Preserve search params if search is active
+            const searchSessionId = getSearchSessionId();
+            if (searchSessionId && searchParams.toString()) {
+              return `/?${searchParams.toString()}`;
+            }
+            return '/';
+          })()}
 
           onClick={handleNavClick}
 
