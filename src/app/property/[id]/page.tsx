@@ -47,34 +47,6 @@ export default function PropertyDetailsPage() {
   const [showDesktopMore, setShowDesktopMore] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionModalView, setDescriptionModalView] = useState<'description' | 'category'>('description');
-  
-  // Check for active search session immediately to prevent flash
-  // Use useState initializer function for synchronous initialization
-  const [hasActiveFilters, setHasActiveFilters] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !!getSearchSessionId();
-    }
-    return false;
-  });
-
-  // Poll for search session changes to keep indicator accurate
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const checkSearchSession = () => {
-        const searchSessionId = getSearchSessionId();
-        const isActive = !!searchSessionId;
-        setHasActiveFilters(isActive);
-      };
-      
-      // Check immediately on mount to catch any changes
-      checkSearchSession();
-      
-      // Poll periodically to catch search session changes
-      const interval = setInterval(checkSearchSession, 100);
-      
-      return () => clearInterval(interval);
-    }
-  }, []);
 
   // Prevent body scrolling when booking modal is open
   usePreventScroll(showBookingModal || showSharePopup || showThreeDotsModal || showNotesModal || showInfoModal || showUpdatedDateModal || showStatusConfirmationModal || showConfirmByModal || showStatusUpdateModal || showAllAmenitiesModal || showDescriptionModal);
@@ -467,7 +439,7 @@ export default function PropertyDetailsPage() {
 
   if (!property) {
     return (
-      <Layout hasActiveFilters={hasActiveFilters}>
+      <Layout>
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-2xl font-semibold text-gray-900 mb-2">Property Not Found</div>
@@ -498,7 +470,7 @@ export default function PropertyDetailsPage() {
   };
 
   return (
-    <Layout hasActiveFilters={hasActiveFilters}>
+    <Layout>
       <div className="bg-gray-50">
         {/* Property Title */}
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 pt-3 pb-1.5">
