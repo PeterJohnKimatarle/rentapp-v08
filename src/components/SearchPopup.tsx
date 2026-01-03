@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { generateSearchSessionId, setSearchSession } from '@/utils/searchSession';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { generateSearchSessionId, setSearchSession, getSearchSessionId, getSearchFilters } from '@/utils/searchSession';
 import { 
   getAllPropertyTypes, 
   getPropertyTypeChildren, 
@@ -50,19 +50,208 @@ interface SearchPopupProps {
   searchBarPosition?: { top: number; left: number; width: number } | null;
 }
 
+// Helper function to initialize state from filters (synchronous)
+const initializeStateFromFilters = (filters: {
+  propertyType?: string;
+  profile?: string;
+  status?: string;
+  region?: string;
+  ward?: string;
+  minPrice?: number;
+  maxPrice?: number;
+} | null) => {
+  return {
+    propertyType: filters?.propertyType || '',
+    profile: filters?.profile || '',
+    status: filters?.status || '',
+    region: filters?.region || '',
+    ward: filters?.ward || '',
+    minPrice: filters?.minPrice ? filters.minPrice.toLocaleString() : '',
+    maxPrice: filters?.maxPrice ? filters.maxPrice.toLocaleString() : '',
+  };
+};
+
 export default function SearchPopup({ isOpen, onClose, searchBarPosition }: SearchPopupProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
-  const [propertyType, setPropertyType] = useState('');
+  // Initialize state from search session or URL params to persist values
+  const [propertyType, setPropertyType] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters) {
+          return sessionFilters.propertyType || '';
+        }
+      }
+      // Fallback to URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('propertyType') || '';
+    }
+    return '';
+  });
+  
   const [selectedPropertyCategory, setSelectedPropertyCategory] = useState('');
   const [selectedPropertySubType, setSelectedPropertySubType] = useState('');
-  const [status, setStatus] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [selectedProfile, setSelectedProfile] = useState('');
-  const [selectedWard, setSelectedWard] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  
+  const [status, setStatus] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters) {
+          return sessionFilters.status || '';
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('status') || '';
+    }
+    return '';
+  });
+  
+  const [selectedRegion, setSelectedRegion] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters) {
+          return sessionFilters.region || '';
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('region') || '';
+    }
+    return '';
+  });
+  
+  const [selectedProfile, setSelectedProfile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters) {
+          return sessionFilters.profile || '';
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('profile') || '';
+    }
+    return '';
+  });
+  
+  const [selectedWard, setSelectedWard] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters) {
+          return sessionFilters.ward || '';
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('ward') || '';
+    }
+    return '';
+  });
+  
+  const [minPrice, setMinPrice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters?.minPrice) {
+          return sessionFilters.minPrice.toLocaleString();
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      const minPriceParam = urlParams.get('minPrice');
+      if (minPriceParam) {
+        const parsed = parseInt(minPriceParam, 10);
+        if (!isNaN(parsed)) {
+          return parsed.toLocaleString();
+        }
+      }
+    }
+    return '';
+  });
+  
+  const [maxPrice, setMaxPrice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const sessionId = getSearchSessionId();
+      if (sessionId) {
+        const sessionFilters = getSearchFilters();
+        if (sessionFilters?.maxPrice) {
+          return sessionFilters.maxPrice.toLocaleString();
+        }
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      const maxPriceParam = urlParams.get('maxPrice');
+      if (maxPriceParam) {
+        const parsed = parseInt(maxPriceParam, 10);
+        if (!isNaN(parsed)) {
+          return parsed.toLocaleString();
+        }
+      }
+    }
+    return '';
+  });
+
+  // Sync input fields with search session/URL params when modal opens
+  useEffect(() => {
+    if (!isOpen) return; // Only sync when modal is open
+    
+    const sessionId = getSearchSessionId();
+    let filters: ReturnType<typeof getSearchFilters> = null;
+    
+    if (sessionId) {
+      // Prefer session filters
+      filters = getSearchFilters();
+    }
+    
+    // Fallback to URL params if no session filters
+    if (!filters) {
+      const propertyTypeParam = searchParams.get('propertyType');
+      const profileParam = searchParams.get('profile');
+      const statusParam = searchParams.get('status');
+      const regionParam = searchParams.get('region');
+      const wardParam = searchParams.get('ward');
+      const minPriceParam = searchParams.get('minPrice');
+      const maxPriceParam = searchParams.get('maxPrice');
+      
+      if (propertyTypeParam || profileParam || statusParam || regionParam || wardParam || minPriceParam || maxPriceParam) {
+        filters = {
+          propertyType: propertyTypeParam || undefined,
+          profile: profileParam || undefined,
+          status: statusParam || undefined,
+          region: regionParam || undefined,
+          ward: wardParam || undefined,
+          minPrice: minPriceParam ? parseInt(minPriceParam, 10) : undefined,
+          maxPrice: maxPriceParam ? parseInt(maxPriceParam, 10) : undefined,
+        };
+      }
+    }
+    
+    // Update state from filters if they exist
+    if (filters) {
+      const newPropertyType = filters.propertyType || '';
+      const newProfile = filters.profile || '';
+      const newStatus = filters.status || '';
+      const newRegion = filters.region || '';
+      const newWard = filters.ward || '';
+      const newMinPrice = filters.minPrice ? filters.minPrice.toLocaleString() : '';
+      const newMaxPrice = filters.maxPrice ? filters.maxPrice.toLocaleString() : '';
+      
+      if (newPropertyType !== propertyType) setPropertyType(newPropertyType);
+      if (newProfile !== selectedProfile) setSelectedProfile(newProfile);
+      if (newStatus !== status) setStatus(newStatus);
+      if (newRegion !== selectedRegion) setSelectedRegion(newRegion);
+      if (newWard !== selectedWard) setSelectedWard(newWard);
+      if (newMinPrice !== minPrice) setMinPrice(newMinPrice);
+      if (newMaxPrice !== maxPrice) setMaxPrice(newMaxPrice);
+    }
+  }, [isOpen]); // Only run when modal opens/closes, not on every searchParams change
 
   // Clear profile when property type changes
   useEffect(() => {
