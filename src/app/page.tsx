@@ -18,10 +18,76 @@ type SearchFilters = {
   maxPrice?: number; // Maximum price filter
 };
 
+// Helper function to parse filters from URL string (synchronous, no hooks)
+const parseFiltersFromURLString = (search: string): SearchFilters | null => {
+  const params = new URLSearchParams(search);
+  const filters: SearchFilters = {};
+  let hasFilters = false;
+
+  const propertyType = params.get('propertyType');
+  const profile = params.get('profile');
+  const status = params.get('status');
+  const region = params.get('region');
+  const ward = params.get('ward');
+  const minPrice = params.get('minPrice');
+  const maxPrice = params.get('maxPrice');
+
+  if (propertyType) {
+    filters.propertyType = propertyType;
+    hasFilters = true;
+  }
+  if (profile) {
+    filters.profile = profile;
+    hasFilters = true;
+  }
+  if (status) {
+    filters.status = status;
+    hasFilters = true;
+  }
+  if (region) {
+    filters.region = region;
+    hasFilters = true;
+  }
+  if (ward) {
+    filters.ward = ward;
+    hasFilters = true;
+  }
+  if (minPrice) {
+    const parsed = parseInt(minPrice, 10);
+    if (!isNaN(parsed)) {
+      filters.minPrice = parsed;
+      hasFilters = true;
+    }
+  }
+  if (maxPrice) {
+    const parsed = parseInt(maxPrice, 10);
+    if (!isNaN(parsed)) {
+      filters.maxPrice = parsed;
+      hasFilters = true;
+    }
+  }
+
+  return hasFilters ? filters : null;
+};
+
 export default function Home() {
   const searchParams = useSearchParams();
   const [properties, setProperties] = useState(getAllProperties());
-  const [activeFilters, setActiveFilters] = useState<SearchFilters | null>(null);
+  
+  // Initialize activeFilters immediately to prevent flash
+  // Check search session synchronously during component initialization
+  const [activeFilters, setActiveFilters] = useState<SearchFilters | null>(() => {
+    if (typeof window !== 'undefined') {
+      const searchSessionId = getSearchSessionId();
+      if (searchSessionId) {
+        // Active search session exists - parse from URL immediately
+        // This prevents flash by setting correct state before first render
+        const urlSearch = window.location.search;
+        return parseFiltersFromURLString(urlSearch);
+      }
+    }
+    return null;
+  });
 
   // Clear search session on page refresh
   useEffect(() => {
