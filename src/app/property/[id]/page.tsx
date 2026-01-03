@@ -47,21 +47,30 @@ export default function PropertyDetailsPage() {
   const [showDesktopMore, setShowDesktopMore] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [descriptionModalView, setDescriptionModalView] = useState<'description' | 'category'>('description');
-  const [hasActiveFilters, setHasActiveFilters] = useState(false);
+  
+  // Check for active search session immediately to prevent flash
+  // Use useState initializer function for synchronous initialization
+  const [hasActiveFilters, setHasActiveFilters] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !!getSearchSessionId();
+    }
+    return false;
+  });
 
-  // Check for active search session to maintain search indicator
+  // Poll for search session changes to keep indicator accurate
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkSearchSession = () => {
         const searchSessionId = getSearchSessionId();
-        setHasActiveFilters(!!searchSessionId);
+        const isActive = !!searchSessionId;
+        setHasActiveFilters(isActive);
       };
       
-      // Check immediately
+      // Check immediately on mount to catch any changes
       checkSearchSession();
       
       // Poll periodically to catch search session changes
-      const interval = setInterval(checkSearchSession, 200);
+      const interval = setInterval(checkSearchSession, 100);
       
       return () => clearInterval(interval);
     }
