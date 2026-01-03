@@ -161,7 +161,7 @@ export default function Home() {
       return;
     }
 
-    // First mount - detect if this is a fresh load or client-side navigation
+    // First mount - detect if this is a page refresh or initial load with URL params
     hasInitializedRef.current = true;
 
     // Use sessionStorage flag to detect client-side navigation
@@ -172,6 +172,22 @@ export default function Home() {
       // Check if we have the client navigation flag
       const isClientNavigation = sessionStorage.getItem(CLIENT_NAV_FLAG) === 'true';
       
+      // Detect if this is specifically a page refresh (not just absence of flag)
+      let isPageRefresh = false;
+      if ('performance' in window) {
+        try {
+          const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+          if (navigationEntries.length > 0) {
+            const navigationType = navigationEntries[0].type;
+            // 'reload' means page refresh, other types mean initial load or navigation
+            isPageRefresh = navigationType === 'reload';
+          }
+        } catch (e) {
+          // Fallback: if Performance API is not available, assume it's not a refresh
+          isPageRefresh = false;
+        }
+      }
+      
       // Set up beforeunload handler to clear flag on page refresh
       const handleBeforeUnload = () => {
         sessionStorage.removeItem(CLIENT_NAV_FLAG);
@@ -179,21 +195,23 @@ export default function Home() {
       
       window.addEventListener('beforeunload', handleBeforeUnload);
 
-      if (isClientNavigation) {
-        // Client-side navigation (back/forward or in-app navigation) - restore from URL
+      if (isPageRefresh) {
+        // Page refresh detected - reset to default state (ignore URL params)
+        setActiveFilters(null);
+      } else {
+        // Initial load with URL params OR client-side navigation - restore from URL
+        // This handles: bookmarks, external links, direct URL entry, and back/forward navigation
         const filters = parseFiltersFromURL();
         setActiveFilters(filters);
-      } else {
-        // Fresh load or page refresh - reset to default state
-        setActiveFilters(null);
       }
 
       return () => {
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     } else {
-      // SSR fallback - reset to default
-      setActiveFilters(null);
+      // SSR fallback - restore from URL if params exist
+      const filters = parseFiltersFromURL();
+      setActiveFilters(filters);
     }
   }, [searchParams, parseFiltersFromURL]);
 
