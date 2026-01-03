@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import SearchPopup from './SearchPopup';
+import SearchParametersDisplay from './SearchParametersDisplay';
 import { Menu, Search, ArrowLeft, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginPopup from './LoginPopup';
@@ -590,6 +591,9 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
           </div>
         </div>
       )}
+
+      {/* Search Parameters Display - Always visible when search is active */}
+      <SearchParametersDisplay />
 
       <div className="flex-1 flex flex-col lg:flex-row min-w-0 pt-14">
         {/* Left Panel - Navigation (Desktop) */}
