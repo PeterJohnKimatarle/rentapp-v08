@@ -5,7 +5,7 @@
 import Link from 'next/link';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { getSearchSessionId } from '@/utils/searchSession';
+import { getSearchSessionId, getSearchFilters } from '@/utils/searchSession';
 
 import { Home, Search, Settings, Phone, Info, PlusCircle, Heart, Building, User, LogIn, ShieldCheck, LogOut } from 'lucide-react';
 
@@ -98,6 +98,31 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
 
 
+  // Helper to build search URL from session filters
+  const buildSearchUrl = () => {
+    const searchSessionId = getSearchSessionId();
+    if (!searchSessionId) {
+      return '/';
+    }
+    
+    const filters = getSearchFilters();
+    if (!filters) {
+      return '/';
+    }
+    
+    const params = new URLSearchParams();
+    if (filters.propertyType) params.set('propertyType', filters.propertyType);
+    if (filters.profile) params.set('profile', filters.profile);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.region) params.set('region', filters.region);
+    if (filters.ward) params.set('ward', filters.ward);
+    if (filters.minPrice) params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
+    
+    const queryString = params.toString();
+    return queryString ? `/?${queryString}` : '/';
+  };
+
   const handleNavClick = () => {
 
     if (variant === 'popup' && onItemClick) {
@@ -130,14 +155,7 @@ export default function Navigation({ variant = 'default', onItemClick, onSearchC
 
         <Link 
 
-          href={(() => {
-            // Preserve search params if search is active
-            const searchSessionId = getSearchSessionId();
-            if (searchSessionId && searchParams.toString()) {
-              return `/?${searchParams.toString()}`;
-            }
-            return '/';
-          })()}
+          href={buildSearchUrl()}
 
           onClick={handleNavClick}
 

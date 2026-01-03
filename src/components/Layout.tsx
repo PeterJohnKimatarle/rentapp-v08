@@ -4,7 +4,7 @@ import { ReactNode, useState, useEffect, useRef, useMemo, useCallback } from 're
 import { createPortal } from 'react-dom';
 import NextImage from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { getSearchSessionId } from '@/utils/searchSession';
+import { getSearchSessionId, getSearchFilters } from '@/utils/searchSession';
 import Navigation from './Navigation';
 import Footer from './Footer';
 import SearchPopup from './SearchPopup';
@@ -231,20 +231,39 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
     touchEndRef.current = null;
   }, [pathname, isMobileMenuOpen, isSearchPopupOpen]);
 
+  // Helper to build search URL from session filters
+  const buildSearchUrl = useCallback(() => {
+    const searchSessionId = getSearchSessionId();
+    if (!searchSessionId) {
+      return '/';
+    }
+    
+    const filters = getSearchFilters();
+    if (!filters) {
+      return '/';
+    }
+    
+    const params = new URLSearchParams();
+    if (filters.propertyType) params.set('propertyType', filters.propertyType);
+    if (filters.profile) params.set('profile', filters.profile);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.region) params.set('region', filters.region);
+    if (filters.ward) params.set('ward', filters.ward);
+    if (filters.minPrice) params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
+    
+    const queryString = params.toString();
+    return queryString ? `/?${queryString}` : '/';
+  }, []);
+
   const handleLogoClick = () => {
     if (pathname === '/') {
       // Reload the page if already on homepage
       window.location.reload();
     } else {
-      // Preserve search params if search is active
-      const searchSessionId = getSearchSessionId();
-      if (searchSessionId && searchParams.toString()) {
-        // Navigate to home with search params preserved
-        router.push(`/?${searchParams.toString()}`);
-      } else {
-        // Navigate to home without search params
-        router.push('/');
-      }
+      // Preserve search session if active, regardless of current page
+      const homeUrl = buildSearchUrl();
+      router.push(homeUrl);
     }
   };
 
@@ -254,8 +273,9 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
     if (window.history.length > 1) {
       router.back();
     } else {
-      // Fallback to home page if no history
-      router.push('/');
+      // Fallback to home page - preserve search session if active
+      const homeUrl = buildSearchUrl();
+      router.push(homeUrl);
     }
   };
 
@@ -591,15 +611,9 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
                     }
                   });
                   
-                  // Preserve search params if search is active
-                  const searchSessionId = getSearchSessionId();
-                  if (searchSessionId && searchParams.toString()) {
-                    // Navigate to home with search params preserved
-                    router.push(`/?${searchParams.toString()}`);
-                  } else {
-                    // Navigate to home without search params
-                    router.push('/');
-                  }
+                  // Preserve search session if active, regardless of current page
+                  const homeUrl = buildSearchUrl();
+                  router.push(homeUrl);
                 }}
               />
             </div>
