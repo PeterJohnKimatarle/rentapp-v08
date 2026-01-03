@@ -802,6 +802,13 @@ export default function PropertyCard({ property, onBookmarkClick, showMinusIcon 
           <Link 
             href={`/property/${property.id}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`}
             prefetch={true}
+            onClick={() => {
+              // Set client navigation flag when navigating to property details
+              // This ensures back navigation is detected as client-side navigation
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('rentapp_client_navigation', 'true');
+              }
+            }}
             className="flex-1 pt-0 pb-1.5 px-1.5 sm:pt-0 sm:pb-3 sm:px-3 md:pt-0 md:pb-4 md:px-4 lg:pt-0 lg:pb-6 lg:px-6 min-w-0 overflow-hidden cursor-pointer"
           >
             <div className="flex flex-col mb-2 min-w-0">
@@ -1059,6 +1066,10 @@ export default function PropertyCard({ property, onBookmarkClick, showMinusIcon 
           onImageChange={setCurrentImageIndex}
           onViewDetails={() => {
             setIsLightboxOpen(false);
+            // Set client navigation flag when navigating to property details
+            if (typeof window !== 'undefined') {
+              sessionStorage.setItem('rentapp_client_navigation', 'true');
+            }
             const queryString = searchParams.toString();
             router.push(`/property/${property.id}${queryString ? `?${queryString}` : ''}`);
           }}

@@ -100,136 +100,102 @@ export default function Home() {
     [properties, activeFilters, applyFilters]
   );
 
+  // Helper function to parse search filters from URL params
+  const parseFiltersFromURL = useCallback((): SearchFilters | null => {
+    const filters: SearchFilters = {};
+    let hasFilters = false;
+
+    const propertyType = searchParams.get('propertyType');
+    const profile = searchParams.get('profile');
+    const status = searchParams.get('status');
+    const region = searchParams.get('region');
+    const ward = searchParams.get('ward');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+
+    if (propertyType) {
+      filters.propertyType = propertyType;
+      hasFilters = true;
+    }
+    if (profile) {
+      filters.profile = profile;
+      hasFilters = true;
+    }
+    if (status) {
+      filters.status = status;
+      hasFilters = true;
+    }
+    if (region) {
+      filters.region = region;
+      hasFilters = true;
+    }
+    if (ward) {
+      filters.ward = ward;
+      hasFilters = true;
+    }
+    if (minPrice) {
+      const parsed = parseInt(minPrice, 10);
+      if (!isNaN(parsed)) {
+        filters.minPrice = parsed;
+        hasFilters = true;
+      }
+    }
+    if (maxPrice) {
+      const parsed = parseInt(maxPrice, 10);
+      if (!isNaN(parsed)) {
+        filters.maxPrice = parsed;
+        hasFilters = true;
+      }
+    }
+
+    return hasFilters ? filters : null;
+  }, [searchParams]);
+
   // Restore search state from URL params, but only on client-side navigation (not page refresh)
   useEffect(() => {
     // Only run initialization logic once on mount
     if (hasInitializedRef.current) {
       // Subsequent updates (e.g., URL changes from navigation) - restore from URL
-      const filters: SearchFilters = {};
-      let hasFilters = false;
-
-      const propertyType = searchParams.get('propertyType');
-      const profile = searchParams.get('profile');
-      const status = searchParams.get('status');
-      const region = searchParams.get('region');
-      const ward = searchParams.get('ward');
-      const minPrice = searchParams.get('minPrice');
-      const maxPrice = searchParams.get('maxPrice');
-
-      if (propertyType) {
-        filters.propertyType = propertyType;
-        hasFilters = true;
-      }
-      if (profile) {
-        filters.profile = profile;
-        hasFilters = true;
-      }
-      if (status) {
-        filters.status = status;
-        hasFilters = true;
-      }
-      if (region) {
-        filters.region = region;
-        hasFilters = true;
-      }
-      if (ward) {
-        filters.ward = ward;
-        hasFilters = true;
-      }
-      if (minPrice) {
-        const parsed = parseInt(minPrice, 10);
-        if (!isNaN(parsed)) {
-          filters.minPrice = parsed;
-          hasFilters = true;
-        }
-      }
-      if (maxPrice) {
-        const parsed = parseInt(maxPrice, 10);
-        if (!isNaN(parsed)) {
-          filters.maxPrice = parsed;
-          hasFilters = true;
-        }
-      }
-
-      setActiveFilters(hasFilters ? filters : null);
+      const filters = parseFiltersFromURL();
+      setActiveFilters(filters);
       return;
     }
 
-    // First mount - detect navigation type
+    // First mount - detect if this is a fresh load or client-side navigation
     hasInitializedRef.current = true;
 
-    // Detect if this is a page reload vs client-side navigation
-    let isPageReload = false;
-    if (typeof window !== 'undefined' && 'performance' in window) {
-      try {
-        const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
-        if (navigationEntries.length > 0) {
-          const navigationType = navigationEntries[0].type;
-          // 'reload' means page refresh, 'navigate' or 'back_forward' means client-side navigation
-          isPageReload = navigationType === 'reload';
-        }
-      } catch (e) {
-        // Fallback: if Performance API is not available, assume it's not a reload
-        // This preserves existing behavior for older browsers
-        isPageReload = false;
-      }
-    }
+    // Use sessionStorage flag to detect client-side navigation
+    // This flag is set when we navigate client-side and cleared on page unload
+    const CLIENT_NAV_FLAG = 'rentapp_client_navigation';
+    
+    if (typeof window !== 'undefined') {
+      // Check if we have the client navigation flag
+      const isClientNavigation = sessionStorage.getItem(CLIENT_NAV_FLAG) === 'true';
+      
+      // Set up beforeunload handler to clear flag on page refresh
+      const handleBeforeUnload = () => {
+        sessionStorage.removeItem(CLIENT_NAV_FLAG);
+      };
+      
+      window.addEventListener('beforeunload', handleBeforeUnload);
 
-    if (isPageReload) {
-      // Page refresh - ignore URL params and reset to default state
-      // Don't clear URL params here - they're needed for back navigation history
-      setActiveFilters(null);
+      if (isClientNavigation) {
+        // Client-side navigation (back/forward or in-app navigation) - restore from URL
+        const filters = parseFiltersFromURL();
+        setActiveFilters(filters);
+      } else {
+        // Fresh load or page refresh - reset to default state
+        setActiveFilters(null);
+      }
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
     } else {
-      // Client-side navigation (including back/forward) - restore from URL
-      const filters: SearchFilters = {};
-      let hasFilters = false;
-
-      const propertyType = searchParams.get('propertyType');
-      const profile = searchParams.get('profile');
-      const status = searchParams.get('status');
-      const region = searchParams.get('region');
-      const ward = searchParams.get('ward');
-      const minPrice = searchParams.get('minPrice');
-      const maxPrice = searchParams.get('maxPrice');
-
-      if (propertyType) {
-        filters.propertyType = propertyType;
-        hasFilters = true;
-      }
-      if (profile) {
-        filters.profile = profile;
-        hasFilters = true;
-      }
-      if (status) {
-        filters.status = status;
-        hasFilters = true;
-      }
-      if (region) {
-        filters.region = region;
-        hasFilters = true;
-      }
-      if (ward) {
-        filters.ward = ward;
-        hasFilters = true;
-      }
-      if (minPrice) {
-        const parsed = parseInt(minPrice, 10);
-        if (!isNaN(parsed)) {
-          filters.minPrice = parsed;
-          hasFilters = true;
-        }
-      }
-      if (maxPrice) {
-        const parsed = parseInt(maxPrice, 10);
-        if (!isNaN(parsed)) {
-          filters.maxPrice = parsed;
-          hasFilters = true;
-        }
-      }
-
-      setActiveFilters(hasFilters ? filters : null);
+      // SSR fallback - reset to default
+      setActiveFilters(null);
     }
-  }, [searchParams, router]);
+  }, [searchParams, parseFiltersFromURL]);
 
   const hasActiveFilters = activeFilters !== null;
 

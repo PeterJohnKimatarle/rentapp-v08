@@ -146,6 +146,12 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     const queryString = params.toString();
     const newUrl = queryString ? `/?${queryString}` : '/';
     
+    // Set client navigation flag to indicate this is client-side navigation
+    // This flag will be cleared on page refresh (beforeunload)
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('rentapp_client_navigation', 'true');
+    }
+    
     // Check if current page is homepage, bookmarks, my-properties, or recently-removed-bookmarks
     const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
     const isAllowedPage = allowedPages.includes(pathname);
@@ -186,6 +192,11 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
     setSelectedProfile('');
     setMinPrice('');
     setMaxPrice('');
+    
+    // Set client navigation flag to indicate this is client-side navigation
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('rentapp_client_navigation', 'true');
+    }
     
     // Clear URL params by navigating to base path
     const allowedPages = ['/', '/bookmarks', '/my-properties', '/recently-removed-bookmarks'];
