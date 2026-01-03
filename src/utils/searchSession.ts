@@ -14,6 +14,7 @@ let searchFilters: {
   minPrice?: number;
   maxPrice?: number;
 } | null = null;
+let searchSessionVersion: number = 0; // Increment on each search to force updates
 
 /**
  * Generate a unique search session ID
@@ -39,6 +40,7 @@ export const setSearchSession = (
 ) => {
   searchSessionId = sessionId;
   searchFilters = filters;
+  searchSessionVersion++; // Increment version to signal search was performed
 };
 
 /**
@@ -56,10 +58,18 @@ export const getSearchFilters = (): typeof searchFilters => {
 };
 
 /**
+ * Get the current search session version
+ */
+export const getSearchSessionVersion = (): number => {
+  return searchSessionVersion;
+};
+
+/**
  * Clear the search session (called on page refresh)
  */
 export const clearSearchSession = () => {
   searchSessionId = undefined;
   searchFilters = null;
+  searchSessionVersion = 0; // Reset version on clear
 };
 

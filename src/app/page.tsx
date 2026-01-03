@@ -6,7 +6,7 @@ import { getAllProperties } from '@/utils/propertyUtils';
 import { parsePropertyType } from '@/utils/propertyTypes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getSearchSessionId, getSearchFilters, clearSearchSession } from '@/utils/searchSession';
+import { getSearchSessionId, getSearchFilters, clearSearchSession, getSearchSessionVersion } from '@/utils/searchSession';
 
 type SearchFilters = {
   propertyType?: string;
@@ -165,7 +165,47 @@ export default function Home() {
     return hasFilters ? filters : null;
   }, [searchParams]);
 
-  // Restore search state based on explicit search session ID
+  // Track search session version to detect new searches even with same params
+  const [searchSessionVersion, setSearchSessionVersion] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return getSearchSessionVersion();
+    }
+    return 0;
+  });
+
+  // Poll for search session version changes to detect searches with same params
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkSearchVersion = () => {
+      const currentVersion = getSearchSessionVersion();
+      if (currentVersion !== searchSessionVersion) {
+        setSearchSessionVersion(currentVersion);
+        
+        const searchSessionId = getSearchSessionId();
+        if (searchSessionId) {
+          // New search performed - restore from session store or URL
+          const sessionFilters = getSearchFilters();
+          if (sessionFilters) {
+            setActiveFilters(sessionFilters);
+          } else {
+            const filters = parseFiltersFromURL();
+            setActiveFilters(filters);
+          }
+        }
+      }
+    };
+
+    // Check immediately
+    checkSearchVersion();
+
+    // Poll periodically to catch version changes (when URL doesn't change)
+    const interval = setInterval(checkSearchVersion, 100);
+
+    return () => clearInterval(interval);
+  }, [searchSessionVersion, parseFiltersFromURL]);
+
+  // Restore search state based on explicit search session ID and URL changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchSessionId = getSearchSessionId();

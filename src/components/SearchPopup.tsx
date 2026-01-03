@@ -159,8 +159,19 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
       // Redirect to homepage with search params
       router.push(newUrl);
     } else {
-      // Update URL on current page
-      router.push(newUrl);
+      // Update URL on current page - use replace to ensure navigation triggers even with same URL
+      // This ensures search executes even after refresh with same parameters
+      const currentUrl = window.location.pathname + window.location.search;
+      if (currentUrl === newUrl) {
+        // URL is the same - force update by using replace with scroll option
+        router.replace(newUrl, { scroll: false });
+        // Also trigger a small delay to ensure state updates
+        setTimeout(() => {
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }, 0);
+      } else {
+        router.push(newUrl);
+      }
     }
   };
 
