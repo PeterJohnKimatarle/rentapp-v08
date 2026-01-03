@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import LoginPopup from './LoginPopup';
 import InstallInstructionsModal from './InstallInstructionsModal';
 import AppInfoModal from './AppInfoModal';
-import { usePreventScroll } from '@/hooks/usePreventScroll';
+import { usePreventScroll, isInteractionLocked } from '@/hooks/usePreventScroll';
 import UserMenu from './UserMenu';
 import { trackGuestVisit, markGuestInactive } from '@/utils/guestTracking';
 
@@ -41,6 +41,55 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
   const searchBarRef = useRef<HTMLDivElement>(null);
   const [searchBarPosition, setSearchBarPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const avatarSrc = user?.profileImage && user.profileImage.trim() !== '' ? user.profileImage : '/images/reed-richards.png';
+
+  // Touch event handlers for mobile menu swipe gestures - mirroring SearchPopup implementation
+  const menuTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const menuTouchEndRef = useRef<{ x: number; y: number } | null>(null);
+  const menuMinSwipeDistance = 50;
+
+  const menuOnTouchStart = useCallback((e: React.TouchEvent) => {
+    menuTouchEndRef.current = null;
+    menuTouchStartRef.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    };
+  }, []);
+
+  const menuOnTouchEnd = useCallback(() => {
+    const touchStart = menuTouchStartRef.current;
+    const touchEnd = menuTouchEndRef.current;
+
+    if (!touchStart || !touchEnd) {
+      menuTouchStartRef.current = null;
+      menuTouchEndRef.current = null;
+      return;
+    }
+
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    const isRightSwipe = distanceX < -menuMinSwipeDistance; // Left to right swipe
+    const isVerticalSwipe = Math.abs(distanceY) > Math.abs(distanceX);
+
+    // Only handle horizontal right swipes to close (left to right swipe)
+    if (!isVerticalSwipe && isRightSwipe) {
+      setIsMobileMenuOpen(false);
+    }
+
+    // Reset refs after handling
+    menuTouchStartRef.current = null;
+    menuTouchEndRef.current = null;
+  }, []);
+
+  // Keep tracking swipe while blocking background scroll - mirroring SearchPopup
+  const menuHandleOverlayTouchMove = useCallback((e: React.TouchEvent) => {
+    // Use ref to avoid re-renders - no state updates during move
+    menuTouchEndRef.current = {
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    };
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
   const countLabel = useMemo(() => {
     // Show total count for admin portal
@@ -86,6 +135,11 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
       return;
     }
 
+    // Hard global guard: Block gestures if ANY modal/overlay is visible
+    if (isInteractionLocked()) {
+      return;
+    }
+
     touchEndRef.current = null;
     touchStartRef.current = {
       x: e.targetTouches[0].clientX,
@@ -104,6 +158,13 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
   const onTouchEnd = useCallback(() => {
     // Disable global swipe gestures on list-property page
     if (pathname === '/list-property') {
+      return;
+    }
+
+    // Hard global guard: Block gestures if ANY modal/overlay is visible
+    if (isInteractionLocked()) {
+      touchStartRef.current = null;
+      touchEndRef.current = null;
       return;
     }
 
@@ -166,7 +227,7 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
     // Reset refs after handling
     touchStartRef.current = null;
     touchEndRef.current = null;
-  }, [isMobileMenuOpen, isSearchPopupOpen]);
+  }, [pathname, isMobileMenuOpen, isSearchPopupOpen]);
 
   const handleLogoClick = () => {
     if (pathname === '/') {
@@ -487,6 +548,9 @@ export default function Layout({ children, totalCount, filteredCount, hasActiveF
           className="xl:hidden fixed inset-0 z-[60]"
           style={{ touchAction: 'none', minHeight: '100vh', height: '100%', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
           onClick={(e) => e.stopPropagation()}
+          onTouchStart={menuOnTouchStart}
+          onTouchMove={menuHandleOverlayTouchMove}
+          onTouchEnd={menuOnTouchEnd}
         >
           {/* Popup Content */}
           <div

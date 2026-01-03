@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePreventScroll } from '@/hooks/usePreventScroll';
@@ -79,20 +79,10 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
     }
     return {
       text: 'MEMBER',
-      bgColor: 'bg-blue-500',
+      bgColor: 'bg-cyan-500',
       textColor: 'text-white'
     };
   };
-
-  const handleBackdropClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      // Only close on desktop when clicking backdrop
-      if (window.innerWidth >= 1280 && event.target === event.currentTarget) {
-        onClose();
-      }
-    },
-    [onClose]
-  );
 
   const roleBanner = getUserRoleBanner();
 
@@ -100,9 +90,14 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
 
   return (
     <div
-      className="fixed inset-0 z-[70] bg-black/50 xl:bg-transparent"
-      style={{ minHeight: '100vh', height: '100%' }}
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[70]"
+      style={{
+        touchAction: 'none',
+        minHeight: '100vh',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+      }}
+      onClick={() => onClose()}
     >
       <div
         className="fixed bg-blue-200 rounded-2xl shadow-2xl overflow-hidden outline-none"
@@ -153,12 +148,6 @@ export default function UserMenu({ isOpen, onClose, anchorPosition, onLogoutClic
                 <LogOut size={18} />
                 <span>Logout</span>
               </button>
-            <button
-                className="xl:hidden w-full px-4 py-3 rounded-xl bg-gray-500 text-white hover:bg-gray-600 transition-colors flex items-center justify-center"
-              onClick={onClose}
-            >
-                Close
-            </button>
             </div>
           </div>
         </div>
