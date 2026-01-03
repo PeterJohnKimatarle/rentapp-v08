@@ -76,7 +76,9 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Initialize state from search session or URL params to persist values
+  // Initialize state from search session ONLY (not URL params on refresh)
+  // On page refresh, search session is cleared, so inputs initialize to empty
+  // During navigation, search session persists, so inputs show current values
   const [propertyType, setPropertyType] = useState(() => {
     if (typeof window !== 'undefined') {
       const sessionId = getSearchSessionId();
@@ -86,9 +88,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.propertyType || '';
         }
       }
-      // Fallback to URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('propertyType') || '';
     }
     return '';
   });
@@ -105,8 +104,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.status || '';
         }
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('status') || '';
     }
     return '';
   });
@@ -120,8 +117,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.region || '';
         }
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('region') || '';
     }
     return '';
   });
@@ -135,8 +130,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.profile || '';
         }
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('profile') || '';
     }
     return '';
   });
@@ -150,8 +143,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.ward || '';
         }
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('ward') || '';
     }
     return '';
   });
@@ -163,14 +154,6 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
         const sessionFilters = getSearchFilters();
         if (sessionFilters?.minPrice) {
           return sessionFilters.minPrice.toLocaleString();
-        }
-      }
-      const urlParams = new URLSearchParams(window.location.search);
-      const minPriceParam = urlParams.get('minPrice');
-      if (minPriceParam) {
-        const parsed = parseInt(minPriceParam, 10);
-        if (!isNaN(parsed)) {
-          return parsed.toLocaleString();
         }
       }
     }
@@ -186,72 +169,41 @@ export default function SearchPopup({ isOpen, onClose, searchBarPosition }: Sear
           return sessionFilters.maxPrice.toLocaleString();
         }
       }
-      const urlParams = new URLSearchParams(window.location.search);
-      const maxPriceParam = urlParams.get('maxPrice');
-      if (maxPriceParam) {
-        const parsed = parseInt(maxPriceParam, 10);
-        if (!isNaN(parsed)) {
-          return parsed.toLocaleString();
-        }
-      }
     }
     return '';
   });
 
-  // Sync input fields with search session/URL params when modal opens
+  // Sync input fields with search session when modal opens (only if session exists)
+  // Do NOT sync from URL params - that would restore values after refresh
   useEffect(() => {
     if (!isOpen) return; // Only sync when modal is open
     
     const sessionId = getSearchSessionId();
-    let filters: ReturnType<typeof getSearchFilters> = null;
     
+    // Only sync if there's an active search session
+    // On page refresh, sessionId will be undefined, so inputs stay empty
     if (sessionId) {
-      // Prefer session filters
-      filters = getSearchFilters();
-    }
-    
-    // Fallback to URL params if no session filters
-    if (!filters) {
-      const propertyTypeParam = searchParams.get('propertyType');
-      const profileParam = searchParams.get('profile');
-      const statusParam = searchParams.get('status');
-      const regionParam = searchParams.get('region');
-      const wardParam = searchParams.get('ward');
-      const minPriceParam = searchParams.get('minPrice');
-      const maxPriceParam = searchParams.get('maxPrice');
+      const filters = getSearchFilters();
       
-      if (propertyTypeParam || profileParam || statusParam || regionParam || wardParam || minPriceParam || maxPriceParam) {
-        filters = {
-          propertyType: propertyTypeParam || undefined,
-          profile: profileParam || undefined,
-          status: statusParam || undefined,
-          region: regionParam || undefined,
-          ward: wardParam || undefined,
-          minPrice: minPriceParam ? parseInt(minPriceParam, 10) : undefined,
-          maxPrice: maxPriceParam ? parseInt(maxPriceParam, 10) : undefined,
-        };
+      if (filters) {
+        const newPropertyType = filters.propertyType || '';
+        const newProfile = filters.profile || '';
+        const newStatus = filters.status || '';
+        const newRegion = filters.region || '';
+        const newWard = filters.ward || '';
+        const newMinPrice = filters.minPrice ? filters.minPrice.toLocaleString() : '';
+        const newMaxPrice = filters.maxPrice ? filters.maxPrice.toLocaleString() : '';
+        
+        if (newPropertyType !== propertyType) setPropertyType(newPropertyType);
+        if (newProfile !== selectedProfile) setSelectedProfile(newProfile);
+        if (newStatus !== status) setStatus(newStatus);
+        if (newRegion !== selectedRegion) setSelectedRegion(newRegion);
+        if (newWard !== selectedWard) setSelectedWard(newWard);
+        if (newMinPrice !== minPrice) setMinPrice(newMinPrice);
+        if (newMaxPrice !== maxPrice) setMaxPrice(newMaxPrice);
       }
     }
-    
-    // Update state from filters if they exist
-    if (filters) {
-      const newPropertyType = filters.propertyType || '';
-      const newProfile = filters.profile || '';
-      const newStatus = filters.status || '';
-      const newRegion = filters.region || '';
-      const newWard = filters.ward || '';
-      const newMinPrice = filters.minPrice ? filters.minPrice.toLocaleString() : '';
-      const newMaxPrice = filters.maxPrice ? filters.maxPrice.toLocaleString() : '';
-      
-      if (newPropertyType !== propertyType) setPropertyType(newPropertyType);
-      if (newProfile !== selectedProfile) setSelectedProfile(newProfile);
-      if (newStatus !== status) setStatus(newStatus);
-      if (newRegion !== selectedRegion) setSelectedRegion(newRegion);
-      if (newWard !== selectedWard) setSelectedWard(newWard);
-      if (newMinPrice !== minPrice) setMinPrice(newMinPrice);
-      if (newMaxPrice !== maxPrice) setMaxPrice(newMaxPrice);
-    }
-  }, [isOpen]); // Only run when modal opens/closes, not on every searchParams change
+  }, [isOpen]); // Only run when modal opens/closes
 
   // Clear profile when property type changes
   useEffect(() => {
